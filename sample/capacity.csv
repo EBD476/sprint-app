@@ -1,0 +1,9 @@
+Issue key,Summary,Issue Type,Status,Priority,Assignee,Reporter,Created,Resolved,Due Date,Story Points,Sprint,Time Spent
+C-1,Queue processor,Task,Done,High,Alice,John,2026-07-01,2026-07-04,2026-07-10,3,Sprint A,
+C-2,Dead letter retry,Task,Done,High,Alice,John,2026-07-02,2026-07-05,2026-07-10,3,Sprint A,
+C-3,Config sync,Task,Done,Medium,Bob,John,2026-07-01,2026-07-08,2026-07-10,5,Sprint A,
+C-4,Gateway auth,Task,In Progress,High,Bob,John,2026-07-05,,2026-07-10,5,Sprint A,
+C-5,Webhook fanout,Task,In Progress,High,Bob,John,2026-07-06,,2026-07-10,5,Sprint A,
+C-6,Rate limiter,Task,Blocked,High,Bob,John,2026-07-07,,2026-07-10,5,Sprint A,
+C-7,Audit trail,Task,In Progress,Medium,Carol,John,2026-07-05,,2026-07-10,3,Sprint A,
+C-8,Billing export,Task,To Do,Medium,Carol,John,2026-07-06,,2026-07-10,3,Sprint A,

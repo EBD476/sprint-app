@@ -1,0 +1,6 @@
+server/proxy.mjs — dependency-free node:http proxy that injects LLM_API_KEY, with optional PROXY_AUTH_TOKEN, model allowlist (ALLOWED_MODELS), per-minute/day rate limits, JSONL audit log, SSE passthrough, CORS, and a /health endpoint. Added npm run proxy.
+src/utils/llmProxy.js — fetch-based SSE reader (proxyChat) with delta callback + error body parsing.
+src/store/LlmContext.jsx — settings now include mode: 'direct' | 'proxy', proxyUrl, proxyToken.
+src/components/SettingsModal.jsx — LLM tab got a Direct/Proxy connection toggle with context-sensitive fields and note.
+src/pages/Analysis.jsx — send branches: proxy mode streams via proxyChat (live updates), direct mode keeps the OpenAI SDK path; plus errorNoProxy guard.
+src/i18n/translations.js — new llm.*/analysis.errorNoProxy keys in en + fa.

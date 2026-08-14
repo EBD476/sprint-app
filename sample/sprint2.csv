@@ -1,0 +1,9 @@
+Issue key,Summary,Issue Type,Status,Priority,Assignee,Reporter,Created,Resolved,Due Date,Story Points,Sprint,Time Spent
+SP-201,Reindex search clusters,Task,Done,High,Alice,John,2026-07-15,2026-07-18,2026-07-20,5,Sprint 13,
+SP-202,Migrate CI to new runners,Task,Done,Medium,Bob,Alice,2026-07-14,2026-07-19,2026-07-22,8,Sprint 13,
+SP-203,Upgrade node runtime,Bug,In Progress,High,Charlie,Bob,2026-07-16,,2026-07-25,3,Sprint 13,
+SP-204,QA pass on release branch,Task,In Progress,Medium,Dana,Alice,2026-07-17,,2026-07-28,5,Sprint 13,
+SP-205,Backfill analytics events,Task,To Do,Medium,Alice,John,2026-07-18,,2026-07-30,8,Sprint 13,
+SP-206,Fix flaky payment tests,Bug,To Do,Low,Bob,Dana,2026-07-18,,2026-08-01,2,Sprint 13,
+SP-207,Dark mode polish,Task,Done,Low,Dana,Alice,2026-07-13,2026-07-17,2026-07-21,3,Sprint 13,
+SP-208,Load-test checkout flow,Task,To Do,High,Charlie,John,2026-07-19,,2026-08-02,5,Sprint 13,
