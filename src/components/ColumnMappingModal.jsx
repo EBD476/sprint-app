@@ -13,6 +13,7 @@ const FIELDS = [
   { field: 'storyPoints' },
   { field: 'timeSpent' },
   { field: 'labels' },
+  { field: 'comment' },
   { field: 'created' },
   { field: 'resolved' },
   { field: 'dueDate' },

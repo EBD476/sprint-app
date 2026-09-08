@@ -3,6 +3,8 @@ import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import Compare from './pages/Compare'
 import Analysis from './pages/Analysis'
+import Presets from './pages/Presets'
+import DataSourceSelector from './pages/DataSourceSelector'
 import { LlmProvider } from './store/LlmContext'
 import SettingsModal from './components/SettingsModal'
 import ColumnMappingModal from './components/ColumnMappingModal'
@@ -22,8 +24,11 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="compare" element={<Compare />} />
           <Route path="analysis" element={<Analysis />} />
+          <Route path="presets" element={<Presets />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
+        <Route path="/source" element={<DataSourceSelector />} />
+        <Route path="*" element={<Navigate to="/source" replace />} />
       </Routes>
       <SettingsModal />
       <MappingModal />

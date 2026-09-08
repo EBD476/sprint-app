@@ -1,0 +1,21 @@
+Issue ID,Issue Summary,Date,Author,Type,Comment,Spent Time,Estimation,Due Date
+DEV-101,Implement OAuth2 login flow,2026-07-01,Alice,Development,Added JWT token refresh logic; waiting for key rotation from security team,8,5,2026-07-15
+DEV-102,Design new dashboard layout,2026-06-29,Bob,Design,Finalized wireframes; sent for stakeholder review,4,8,2026-07-05
+DEV-103,Refactor billing service,2026-06-30,Charlie,Development,Pending third-party API approval to unblock payments refactor,6,13,2026-07-08
+DEV-104,Write API integration tests,2026-07-02,Alice,Testing,Added test suite for auth endpoints; green in CI,5,3,2026-07-06
+DEV-105,Fix memory leak in worker,2026-07-03,David,Bug,Reproducing under high load; profiling shows heap growth in queue handler,10,5,2026-07-09
+DEV-106,Update onboarding docs,2026-07-04,Unassigned,Documentation,Waiting for final API spec before writing,2,2,2026-07-20
+DEV-107,Add pagination to search results,2026-07-01,Bob,Development,Backend endpoint ready for testing; frontend wiring in progress,12,8,2026-07-10
+DEV-108,Migrate legacy DB indexes,2026-07-02,Charlie,Backend,Schema migration plan approved; running on staging,8,8,2026-07-06
+DEV-109,Upgrade dependency graph library,2026-07-05,David,Maintenance,Version 3.0 has breaking changes; reviewing upgrade path,3,3,2026-07-14
+DEV-110,Email notifications for billing,2026-07-06,Alice,Feature,SMTP config still missing in staging; blocked by infra,4,5,2026-07-14
+DEV-111,Set up error monitoring alerts,2026-07-07,Bob,DevOps,Bound error budget from SLO to PagerDuty,5,3,2026-07-11
+DEV-112,Accessibility audit for settings page,2026-07-08,Alice,Testing,Found 12 WCAG issues; filing fixes next sprint,7,5,2026-07-17
+DEV-113,Extract shared UI button component,2026-07-09,David,Refactor,Extracted Button + IconButton; replaced usages across 14 files,9,5,2026-07-13
+DEV-114,Optimize image resizing pipeline,2026-07-10,Charlie,Performance,Switched to WebP + AVIF encoding; p95 latency down 40%,11,8,2026-07-18
+DEV-115,Add dark mode to settings,2026-07-11,Unassigned,Feature,Not started; open slot for next sprint,0,3,2026-07-22
+DEV-116,Fix flaky checkout test,2026-07-12,David,Bug,Root cause: shared DB fixture race; fixed with per-test isolation,6,2,2026-07-14
+DEV-117,Prepare release notes v2.4,2026-07-13,Alice,Documentation,Awaiting scope freeze; drafted sections 1-3,2,1,2026-07-16
+DEV-118,Rate limit public API endpoints,2026-07-14,Charlie,Backend,Added token bucket limiter; needs load test validation,8,8,2026-07-21
+DEV-119,Automate weekly dependency audit,2026-07-15,Bob,DevOps,Scheduled GitHub Action; slacked first audit run,5,5,2026-07-19
+DEV-120,Investigate prod login timeouts,2026-07-15,David,Bug,Blocked; waiting on Redis latency metrics from observability team,4,5,2026-07-18

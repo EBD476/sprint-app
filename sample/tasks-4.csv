@@ -1,0 +1,7 @@
+issue id, issue summary,date, author,type,comment, spent time,estimation,due date,Created,Resolved,Due Date,Story Points,Sprint,Time Spent
+SPR-101, Implement user login API,2026-09-01, Ali Rezaei,Story,Initial implementation of JWT-based login endpoint, 4h, 8h, 2026-09-05,2026-08-01,2026-08-04,2026-08-05,3,Sprint 12,6h 
+SPR-102, Fix null pointer in payment service,2026-09-02, Sara Mohammadi,Bug,Resolved NPE when payment provider returns empty response, 2h, 3h, 2026-09-03,2026-08-01,2026-08-04,2026-08-05,3,Sprint 12,6h 
+SPR-103, Add fraud score calculation job,2026-09-03, Ali Rezaei,Task,Scheduled Spark job to compute daily fraud scores, 6h, 10h, 2026-09-06,2026-08-01,2026-08-04,2026-08-05,3,Sprint 12,6h 
+SPR-104, Update Kafka consumer config,2026-09-04, Reza Karimi,Task,Increased max.poll.records and tuned backoff settings, 1.5h, 2h, 2026-09-04,2026-08-01,2026-08-04,2026-08-05,3,Sprint 12,6h 
+SPR-105, Design new dashboard wireframes,2026-09-05, Narges Hosseini,Story,Created Figma mockups for fraud analyst dashboard, 3h, 5h, 2026-09-07,2026-08-01,2026-08-04,2026-08-05,3,Sprint 12,6h 
+SPR-106, Write unit tests for rule engine,2026-09-05, Ali Rezaei,Task,Added tests for threshold and velocity rules, 2.5h, 4h, 2026-09-06,2026-08-01,2026-08-04,2026-08-05,3,Sprint 12,6h 

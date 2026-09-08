@@ -104,7 +104,7 @@ export default function Dashboard() {
             <button className="btn ghost" onClick={removeActive}>
               {t('dashboard.clear')}
             </button>
-            <button className="btn ghost" onClick={() => window.print()}>
+            <button className="btn ghost" onClick={() => globalThis.print()}>
               {t('dashboard.export')}
             </button>
           </div>

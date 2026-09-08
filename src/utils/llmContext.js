@@ -5,6 +5,10 @@ function truncate(str, len) {
   return String(str).length > len ? String(str).slice(0, len) + '…' : String(str)
 }
 
+function singleLine(str) {
+  return String(str || '').replace(/\s+/g, ' ').trim()
+}
+
 export function buildDataContext(tasks, stats) {
   if (!tasks || tasks.length === 0) return ''
 
@@ -51,10 +55,10 @@ export function buildDataContext(tasks, stats) {
     }
   }
 
-  lines.push(`\n## All tasks (key | summary | type | status | assignee | points)`)
+  lines.push(`\n## All tasks (key | summary | type | status | assignee | points | comment)`)
   for (const t of tasks) {
     lines.push(
-      `${t.key} | ${truncate(t.summary, 60)} | ${t.type} | ${t.status} | ${t.assignee} | ${t.storyPoints ?? '-'}`
+      `${t.key} | ${truncate(t.summary, 60)} | ${t.type} | ${t.status} | ${t.assignee} | ${t.storyPoints ?? '-'} | ${t.comment ? `"${truncate(singleLine(t.comment), 200)}"` : '-'}`
     )
   }
 

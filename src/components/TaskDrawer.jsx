@@ -42,6 +42,7 @@ export default function TaskDrawer({ task, onClose }) {
     { label: t('fields.sprint'), value: task.sprint },
     { label: t('fields.storyPoints'), value: task.storyPoints != null ? n(task.storyPoints) : null },
     { label: t('fields.timeSpent'), value: task.timeSpent != null ? n(task.timeSpent) : null },
+    { label: t('fields.comment'), value: task.comment },
     { label: t('fields.created'), value: fmtDate(task.created, locale) },
     { label: t('fields.updated'), value: fmtDate(task.updated, locale) },
     { label: t('fields.resolved'), value: fmtDate(task.resolved, locale) },

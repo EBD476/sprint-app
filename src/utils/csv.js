@@ -1,21 +1,22 @@
 import Papa from 'papaparse'
 
 const ALIASES = {
-  key: ['issue key', 'key', 'id', 'issue id'],
-  summary: ['summary', 'title', 'name', 'task'],
-  type: ['issue type', 'type', 'task type', 'kind'],
+  key: ['issue id', 'issue key', 'key', 'id'],
+  summary: ['issue summary', 'summary', 'title', 'name', 'task'],
+  type: ['type', 'issue type', 'task type', 'kind'],
   status: ['status', 'state', 'current status', 'workflow status'],
   priority: ['priority', 'severity'],
-  assignee: ['assignee', 'assignee display name', 'assigned to', 'owner', 'assignees'],
+  assignee: ['author', 'assignee', 'assignee display name', 'assigned to', 'owner', 'assignees'],
   reporter: ['reporter', 'created by'],
-  created: ['created', 'creation date', 'created date'],
+  created: ['date', 'created', 'creation date', 'created date'],
   updated: ['updated', 'updated date'],
   resolved: ['resolved', 'resolution date', 'resolved date', 'done date'],
   dueDate: ['due date', 'due', 'deadline'],
-  storyPoints: ['story points', 'points', 'estimate', 'original estimate'],
+  storyPoints: ['estimation', 'story points', 'points', 'estimate', 'original estimate'],
   sprint: ['sprint', 'sprint name', 'iteration'],
-  timeSpent: ['time spent', 'spent', 'timespent', 'time spent (hours)'],
+  timeSpent: ['spent time', 'time spent', 'spent', 'timespent', 'time spent (hours)'],
   labels: ['labels', 'tags', 'components'],
+  comment: ['comment', 'comments', 'description', 'notes', 'remark'],
 }
 
 const FIELD_ALIASES = Object.keys(ALIASES)
@@ -70,6 +71,7 @@ function normalizeRow(rawRow, columnMap) {
       .split(/[,;|]/)
       .map((l) => l.trim())
       .filter(Boolean),
+    comment: String(pick('comment') ?? '').trim(),
   }
 
   task.raw = { ...rawRow }
@@ -112,7 +114,7 @@ export function buildTasks(rows, columnMap) {
   const mappedHeaders = Object.values(columnMap)
   if (mappedHeaders.length === 0) {
     throw new Error(
-      'No columns mapped. Expected a sprint export (e.g. Jira) with columns like "Summary", "Status", "Assignee", "Story Points".'
+      'No columns mapped. Expected a sprint export with columns like "Issue Summary", "Date", "Author", "Type", "Spent Time".'
     )
   }
 

@@ -4,32 +4,26 @@ import OpenAI from 'openai'
 import { useSprint } from '../store/SprintContext'
 import { useLlm } from '../store/LlmContext'
 import { usePrefs } from '../store/PrefsContext'
+import { usePresets } from '../store/PresetContext'
 import { useI18n } from '../i18n'
 import { buildDataContext } from '../utils/llmContext'
 import { proxyChat } from '../utils/llmProxy'
 
-const SYSTEM_PROMPT =
+const buildSystemPrompt = (locale) =>
   'You are an expert agile coach analyzing a sprint/iteration dataset for a software team. ' +
   'Answer concisely and concretely, referring to the actual data provided. ' +
   'Highlight blockers, risks, bottlenecks, work imbalance, and actionable recommendations. ' +
-  'Use bullet points and short paragraphs. Do not invent data that is not present.' + 
-  'write result in persian language'
-
-
-const PROMPT_KEYS = [
-  'prompt.summary',
-  'prompt.risks',
-  'prompt.capacity',
-  'prompt.cycle',
-  'prompt.focus',
-  'prompt.anomalies',
-]
+  'Use bullet points and short paragraphs. Do not invent data that is not present. ' +
+  (locale === 'fa'
+    ? 'Write your response in Persian.'
+    : 'Write your response in the same language the user uses.')
 
 export default function Analysis() {
   const { tasks, stats, csvMeta, activeId } = useSprint()
   const { baseUrl, apiKey, model, mode, proxyUrl, proxyToken } = useLlm()
   const { openSettings } = usePrefs()
-  const { t, n } = useI18n()
+  const { presets } = usePresets()
+  const { t, n, locale } = useI18n()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [busy, setBusy] = useState(false)
@@ -63,9 +57,8 @@ export default function Analysis() {
   }
 
   const dataContext = buildDataContext(tasks, stats)
-  const prompts = PROMPT_KEYS.map((k) => t(k))
 
-  const send = async (text) => {
+  const send = async (text, display) => {
     const prompt = (text ?? input).trim()
     if (!prompt || busy) return
     if (mode !== 'proxy' && !apiKey.trim()) {
@@ -75,12 +68,12 @@ export default function Analysis() {
     }
     setError(null)
     setInput('')
-    const history = [...messages, { role: 'user', content: prompt }]
+    const history = [...messages, { role: 'user', content: prompt, display: display || prompt }]
     setMessages(history)
     setBusy(true)
 
     const messagesForModel = [
-      { role: 'system', content: `${SYSTEM_PROMPT}\n\nDataset (${csvMeta.fileName}):\n${dataContext}` },
+      { role: 'system', content: `${buildSystemPrompt(locale)}\n\nDataset (${csvMeta.fileName}):\n${dataContext}` },
       ...history.map((m) => ({ role: m.role, content: m.content })),
     ]
 
@@ -150,19 +143,26 @@ export default function Analysis() {
             <div className="chat-empty">
               <h3>{t('analysis.chatTitle')}</h3>
               <p className="muted">{t('analysis.chatHint')}</p>
-              <div className="prompt-chips">
-                {prompts.map((p) => (
-                  <button key={p} className="chip" onClick={() => send(p)} disabled={busy}>
-                    {p}
-                  </button>
-                ))}
+              {presets.length > 0 && (
+                <div className="prompt-chips">
+                  {presets.map((p) => (
+                    <button key={p.id} className="chip" onClick={() => send(p.prompt, p.title)} disabled={busy}>
+                      {p.title}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="prompt-manage">
+                <Link to="/presets" className="chip link">
+                  {t('presets.manage')}
+                </Link>
               </div>
             </div>
           ) : (
             messages.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
                 <div className="msg-label">{m.role === 'user' ? t('analysis.you') : t('analysis.aiCoach')}</div>
-                <div className="msg-body">{m.content}</div>
+                <div className="msg-body">{m.display || m.content}</div>
               </div>
             ))
           )}

@@ -36,7 +36,7 @@ export default function TaskTable({ tasks }) {
     const q = query.trim().toLowerCase()
     if (q) {
       list = list.filter((task) =>
-        [task.key, task.summary, task.assignee, task.type, task.status, (task.labels || []).join(' ')]
+        [task.key, task.summary, task.assignee, task.type, task.status, task.comment, (task.labels || []).join(' ')]
           .join(' ')
           .toLowerCase()
           .includes(q)

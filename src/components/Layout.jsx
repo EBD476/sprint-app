@@ -43,6 +43,18 @@ export default function Layout() {
           >
             {t('nav.analysis')}
           </NavLink>
+          <NavLink
+            to="/presets"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            {t('nav.presets')}
+          </NavLink>
+          <NavLink
+            to="/source"
+            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+          >
+            {t('nav.dataSource')}
+          </NavLink>
           <button className={`nav-link nav-action${apiKey ? '' : ' warning'}`} onClick={() => openSettings()}>
             ⚙ {t('nav.settings')}
           </button>
