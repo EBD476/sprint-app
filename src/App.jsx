@@ -25,9 +25,9 @@ export default function App() {
           <Route path="compare" element={<Compare />} />
           <Route path="analysis" element={<Analysis />} />
           <Route path="presets" element={<Presets />} />
+          <Route path="source" element={<DataSourceSelector />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
-        <Route path="/source" element={<DataSourceSelector />} />
         <Route path="*" element={<Navigate to="/source" replace />} />
       </Routes>
       <SettingsModal />
