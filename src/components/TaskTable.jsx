@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { classifyStatus } from '../utils/stats'
 import { useI18n } from '../i18n'
 import TaskDrawer from './TaskDrawer'
+import SentimentBadge from './SentimentBadge'
 
 const COLUMNS = [
   { key: 'key', label: 'table.col.key' },
@@ -11,6 +12,7 @@ const COLUMNS = [
   { key: 'assignee', label: 'table.col.assignee' },
   { key: 'storyPoints', label: 'table.col.points' },
   { key: 'dueDate', label: 'table.col.due' },
+  { key: '_sentiment', label: 'sentiment.col.sentiment', sortable: false },
 ]
 
 export default function TaskTable({ tasks }) {
@@ -95,7 +97,12 @@ export default function TaskTable({ tasks }) {
           <thead>
             <tr>
               {COLUMNS.map((c) => (
-                <th key={c.key} onClick={() => toggleSort(c.key)} className={sort.key === c.key ? 'sorted' : ''}>
+                <th
+                  key={c.key}
+                  onClick={c.sortable !== false ? () => toggleSort(c.key) : undefined}
+                  className={sort.key === c.key ? 'sorted' : ''}
+                  style={c.sortable === false ? { cursor: 'default' } : undefined}
+                >
                   {t(c.label)}
                   {sort.key === c.key ? (sort.dir === 1 ? ' ↑' : ' ↓') : ''}
                 </th>
@@ -125,6 +132,7 @@ export default function TaskTable({ tasks }) {
                 <td>{task.assignee || unassigned}</td>
                 <td>{task.storyPoints ?? '—'}</td>
                 <td>{task.dueDate ? task.dueDate.slice(0, 10) : '—'}</td>
+                <td><SentimentBadge task={task} /></td>
               </tr>
             ))}
           </tbody>

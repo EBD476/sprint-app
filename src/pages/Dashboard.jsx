@@ -11,7 +11,10 @@ import BurndownChart from '../components/BurndownChart'
 import FlowMetrics from '../components/FlowMetrics'
 import CapacityHeatmap from '../components/CapacityHeatmap'
 import RetroReport from '../components/RetroReport'
+import StandupSummary from '../components/StandupSummary'
 import TaskTable from '../components/TaskTable'
+import SankeyChart from '../components/SankeyChart'
+import NetworkGraph from '../components/NetworkGraph'
 import { sprintChartData } from '../utils/stats'
 
 export default function Dashboard() {
@@ -122,6 +125,27 @@ export default function Dashboard() {
         {stats.overdue.length > 0 && (
           <div className="alert alert-warn">
             <strong>⚠ {n(stats.overdue.length)} {t('dashboard.overdueLabel')}</strong> — {t('dashboard.overdueBody')}
+          </div>
+        )}
+
+        {panels.standup && (
+          <div className="panel">
+            <h2 className="panel-title">{t('panel.standup')}</h2>
+            <StandupSummary tasks={tasks} />
+          </div>
+        )}
+
+        {panels.sankey && (
+          <div className="panel">
+            <h2 className="panel-title">{t('panel.sankey')}</h2>
+            <SankeyChart tasks={tasks} />
+          </div>
+        )}
+
+        {panels.network && (
+          <div className="panel">
+            <h2 className="panel-title">{t('panel.network')}</h2>
+            <NetworkGraph tasks={tasks} />
           </div>
         )}
 

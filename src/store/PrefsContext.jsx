@@ -8,6 +8,9 @@ const PANELS_KEY = 'sprint-pulse-panels'
 const WINDOW_STYLE_KEY = 'sprint-pulse-window-style'
 
 export const PANEL_IDS = [
+  'standup',
+  'sankey',
+  'network',
   'burndown',
   'velocity',
   'flow',

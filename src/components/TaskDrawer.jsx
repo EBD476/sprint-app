@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { classifyStatus, cycleDays } from '../utils/stats'
 import { useI18n } from '../i18n'
+import SentimentBadge from './SentimentBadge'
 
 function fmtDate(s, locale) {
   if (!s) return null
@@ -70,6 +71,7 @@ export default function TaskDrawer({ task, onClose }) {
         <div className="drawer-badges">
           <span className={`status-badge status-${cls}`}>{task.status}</span>
           {overdue && <span className="drawer-overdue-badge">⚠ {t('drawer.overdue')}</span>}
+          <SentimentBadge task={task} showLabel />
         </div>
 
         <div className="drawer-cycle">

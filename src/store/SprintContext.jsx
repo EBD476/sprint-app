@@ -83,6 +83,12 @@ export function SprintProvider({ children }) {
     setActiveId(ds.id)
     setWindow((prev) => {
       if (prev.start || prev.end) return prev
+      if (meta.sprintDates?.start || meta.sprintDates?.end) {
+        return {
+          start: meta.sprintDates.start ? meta.sprintDates.start.slice(0, 10) : null,
+          end: meta.sprintDates.end ? meta.sprintDates.end.slice(0, 10) : null
+        }
+      }
       const w = activeSprintRange(meta.tasks)
       return w || prev
     })

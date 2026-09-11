@@ -1,16 +1,87 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import FileUpload from '../components/FileUpload'
 import { useSprint } from '../store/SprintContext'
+import * as jira from '../utils/jira'
+import * as youtrack from '../utils/youtrack'
+
+const JIRA_STORAGE_KEY = 'sprint-pulse-jira-config'
+const YOUTRACK_STORAGE_KEY = 'sprint-pulse-youtrack-config'
+
+function loadJiraConfig() {
+  try {
+    const raw = localStorage.getItem(JIRA_STORAGE_KEY)
+    if (!raw) return { baseUrl: '', email: '', apiToken: '' }
+    const parsed = JSON.parse(raw)
+    return { baseUrl: parsed.baseUrl || '', email: parsed.email || '', apiToken: '' }
+  } catch {
+    return { baseUrl: '', email: '', apiToken: '' }
+  }
+}
+
+function loadYouTrackConfig() {
+  try {
+    const raw = localStorage.getItem(YOUTRACK_STORAGE_KEY)
+    if (!raw) return { baseUrl: '', token: '' }
+    const parsed = JSON.parse(raw)
+    return { baseUrl: parsed.baseUrl || '', token: '' }
+  } catch {
+    return { baseUrl: '', token: '' }
+  }
+}
+
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card">
+      <div className="skeleton skeleton-key" />
+      <div className="skeleton skeleton-name" />
+    </div>
+  )
+}
+
+function SkeletonRow() {
+  return (
+    <div className="skeleton-row">
+      <div className="skeleton skeleton-row-name" />
+      <div className="skeleton skeleton-row-state" />
+      <div className="skeleton skeleton-row-dates" />
+    </div>
+  )
+}
+
+function ProgressBar({ progress }) {
+  if (!progress) return null
+  const { phase, fetched, total, retryAfter } = progress
+  const pct = typeof total === 'number' && total > 0 ? Math.round((fetched / total) * 100) : null
+
+  return (
+    <div className="progress-bar-wrap">
+      <div className="progress-bar">
+        <div className="progress-bar-fill" style={pct != null ? { width: `${pct}%` } : { className: 'indeterminate' }} />
+      </div>
+      <div className="progress-bar-label">
+        {phase === 'rate-limited' ? (
+          <span className="progress-rate-limited">Rate limited — retrying in {retryAfter}s…</span>
+        ) : phase === 'done' ? (
+          <span>Fetched {fetched} issues</span>
+        ) : pct != null ? (
+          <span>Fetched {fetched} / {total} issues ({pct}%)</span>
+        ) : (
+          <span>Fetching…</span>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function DataSourceSelector() {
   const navigate = useNavigate()
   const { t } = useI18n()
   const { datasets, addDataset, openMapping } = useSprint()
   const [activeTab, setActiveTab] = useState('csv')
-  const [jiraConfig, setJiraConfig] = useState({ baseUrl: '', email: '', apiToken: '' })
-  const [youtrackConfig, setYouTrackConfig] = useState({ baseUrl: '', token: '' })
+  const [jiraConfig, setJiraConfig] = useState(loadJiraConfig)
+  const [youtrackConfig, setYouTrackConfig] = useState(loadYouTrackConfig)
   const [jiraProjects, setJiraProjects] = useState([])
   const [youtrackProjects, setYouTrackProjects] = useState([])
   const [selectedJiraProject, setSelectedJiraProject] = useState('')
@@ -22,6 +93,19 @@ export default function DataSourceSelector() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [step, setStep] = useState('config')
+  const [progress, setProgress] = useState(null)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(JIRA_STORAGE_KEY, JSON.stringify({ baseUrl: jiraConfig.baseUrl, email: jiraConfig.email }))
+    } catch {}
+  }, [jiraConfig.baseUrl, jiraConfig.email])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(YOUTRACK_STORAGE_KEY, JSON.stringify({ baseUrl: youtrackConfig.baseUrl }))
+    } catch {}
+  }, [youtrackConfig.baseUrl])
 
   const handleFileUpload = (tasks, meta) => {
     addDataset({ ...meta, tasks })
@@ -32,211 +116,72 @@ export default function DataSourceSelector() {
     openMapping({ ...payload, mode: 'add' })
   }
 
-  const validateJiraConfig = () => {
-    return jiraConfig.baseUrl.trim() && jiraConfig.email.trim() && jiraConfig.apiToken.trim()
-  }
-
-  const validateYouTrackConfig = () => {
-    return youtrackConfig.baseUrl.trim() && youtrackConfig.token.trim()
-  }
-
-  const fetchJiraProjects = async () => {
-    if (!validateJiraConfig()) return
+  const run = async (fn) => {
     setLoading(true)
     setError(null)
+    setProgress(null)
     try {
-      const response = await fetch(`${jiraConfig.baseUrl.replace(/\/$/, '')}/rest/api/3/project/search`, {
-        headers: {
-          'Authorization': `Basic ${btoa(`${jiraConfig.email}:${jiraConfig.apiToken}`)}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!response.ok) throw new Error(`Jira API error: ${response.status}`)
-      const data = await response.json()
-      setJiraProjects(data.values || data)
+      await fn()
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
+      setProgress(null)
+    }
+  }
+
+  const fetchJiraProjects = () => {
+    if (!jira.validateConfig(jiraConfig)) return
+    run(async () => {
+      setJiraProjects(await jira.fetchProjects(jiraConfig, { onProgress: setProgress }))
       setStep('project')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
-  const fetchJiraSprints = async (projectKey) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const boardRes = await fetch(`${jiraConfig.baseUrl.replace(/\/$/, '')}/rest/agile/1.0/board?projectKeyOrId=${projectKey}`, {
-        headers: {
-          'Authorization': `Basic ${btoa(`${jiraConfig.email}:${jiraConfig.apiToken}`)}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!boardRes.ok) throw new Error(`Jira Board API error: ${boardRes.status}`)
-      const boardData = await boardRes.json()
-      const boards = boardData.values || []
-      
-      if (boards.length === 0) {
-        setJiraSprints([])
-        setStep('sprint')
-        return
-      }
-
-      const sprintRes = await fetch(`${jiraConfig.baseUrl.replace(/\/$/, '')}/rest/agile/1.0/board/${boards[0].id}/sprint?state=active,closed,future`, {
-        headers: {
-          'Authorization': `Basic ${btoa(`${jiraConfig.email}:${jiraConfig.apiToken}`)}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!sprintRes.ok) throw new Error(`Jira Sprint API error: ${sprintRes.status}`)
-      const sprintData = await sprintRes.json()
-      setJiraSprints(sprintData.values || [])
+  const fetchJiraSprints = (projectKey) => {
+    setSelectedJiraProject(projectKey)
+    run(async () => {
+      setJiraSprints(await jira.fetchSprints(jiraConfig, projectKey, { onProgress: setProgress }))
       setStep('sprint')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
-  const importJiraSprint = async (sprintId) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await fetch(`${jiraConfig.baseUrl.replace(/\/$/, '')}/rest/agile/1.0/sprint/${sprintId}/issue?maxResults=1000&fields=summary,status,assignee,issuetype,priority,created,updated,resolutiondate,duedate,storypoints,sprint,timeoriginalestimate,labels,comment`, {
-        headers: {
-          'Authorization': `Basic ${btoa(`${jiraConfig.email}:${jiraConfig.apiToken}`)}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!response.ok) throw new Error(`Jira Issues API error: ${response.status}`)
-      const data = await response.json()
-      const issues = data.issues || []
-      
-      const tasks = issues.map(issue => {
-        const fields = issue.fields
-        const sprintName = fields.sprint ? fields.sprint.map(s => s.name).join(', ') : ''
-        const storyPoints = fields.customfield_10016 || fields.customfield_10020 || fields.customfield_10002 || null
-        
-        return {
-          key: issue.key,
-          summary: fields.summary || '',
-          type: fields.issuetype?.name || 'Task',
-          status: fields.status?.name || 'Unknown',
-          priority: fields.priority?.name || '',
-          assignee: fields.assignee?.displayName || 'Unassigned',
-          reporter: fields.reporter?.displayName || '',
-          created: fields.created,
-          updated: fields.updated,
-          resolved: fields.resolutiondate,
-          dueDate: fields.duedate,
-          storyPoints: storyPoints ? parseFloat(storyPoints) : null,
-          sprint: sprintName,
-          timeSpent: fields.timeoriginalestimate ? fields.timeoriginalestimate / 3600 : null,
-          labels: fields.labels || [],
-          comment: fields.comment?.comments?.[0]?.body || ''
-        }
-      }).filter(t => t.key || t.summary)
-
-      const headers = ['key', 'summary', 'type', 'status', 'priority', 'assignee', 'reporter', 'created', 'updated', 'resolved', 'dueDate', 'storyPoints', 'sprint', 'timeSpent', 'labels', 'comment']
-      addDataset({ fileName: `Jira Sprint ${selectedJiraSprint}`, headers, columnMap: {}, rows: tasks, tasks })
+  const importJiraSprint = (sprintId) => {
+    setSelectedJiraSprint(sprintId)
+    run(async () => {
+      const { tasks, headers, sprintDates } = await jira.importSprint(jiraConfig, sprintId, { onProgress: setProgress })
+      addDataset({ fileName: `Jira Sprint ${sprintId}`, headers, columnMap: {}, rows: tasks, tasks, sprintDates })
       navigate('/')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
-  const fetchYouTrackProjects = async () => {
-    if (!validateYouTrackConfig()) return
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await fetch(`${youtrackConfig.baseUrl.replace(/\/$/, '')}/api/admin/projects?fields=id,name,shortName`, {
-        headers: {
-          'Authorization': `Bearer ${youtrackConfig.token}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!response.ok) throw new Error(`YouTrack API error: ${response.status}`)
-      const data = await response.json()
-      setYouTrackProjects(data)
+  const fetchYouTrackProjects = () => {
+    if (!youtrack.validateConfig(youtrackConfig)) return
+    run(async () => {
+      setYouTrackProjects(await youtrack.fetchProjects(youtrackConfig, { onProgress: setProgress }))
       setStep('project')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
-  const fetchYouTrackSprints = async (projectId) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await fetch(`${youtrackConfig.baseUrl.replace(/\/$/, '')}/api/issues?query=project:${projectId}%20has:%20sprint&fields=id,summary,sprint,name,start,finish,archived`, {
-        headers: {
-          'Authorization': `Bearer ${youtrackConfig.token}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!response.ok) throw new Error(`YouTrack Sprint API error: ${response.status}`)
-      const data = await response.json()
-      const sprints = [...new Map(data.map(i => [i.sprint?.name, i.sprint]).filter(([k]) => k)).values()]
-      setYouTrackSprints(sprints)
+  const fetchYouTrackSprints = (projectId) => {
+    setSelectedYouTrackProject(projectId)
+    run(async () => {
+      setYouTrackSprints(await youtrack.fetchSprints(youtrackConfig, projectId, { onProgress: setProgress }))
       setStep('sprint')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
-  const importYouTrackSprint = async (sprintName) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const response = await fetch(`${youtrackConfig.baseUrl.replace(/\/$/, '')}/api/issues?query=sprint:${encodeURIComponent(sprintName)}&fields=id,summary,project,type,state,assignee,reporter,created,updated,resolved,dueDate,customFields(name,value),timeSpent,tags(name),comments(text)`, {
-        headers: {
-          'Authorization': `Bearer ${youtrackConfig.token}`,
-          'Accept': 'application/json'
-        }
-      })
-      if (!response.ok) throw new Error(`YouTrack Issues API error: ${response.status}`)
-      const data = await response.json()
-      
-      const tasks = data.map(issue => {
-        const customFields = {}
-        issue.customFields?.forEach(f => { customFields[f.name] = f.value })
-        
-        return {
-          key: issue.idReadable || issue.id,
-          summary: issue.summary || '',
-          type: issue.$type?.replace('Issue', '') || 'Task',
-          status: issue.state?.name || issue.state?.localizedName || 'Unknown',
-          priority: customFields.Priority?.name || customFields.Priority || '',
-          assignee: issue.assignee?.fullName || issue.assignee?.name || 'Unassigned',
-          reporter: issue.reporter?.fullName || issue.reporter?.name || '',
-          created: issue.created ? new Date(issue.created).toISOString() : null,
-          updated: issue.updated ? new Date(issue.updated).toISOString() : null,
-          resolved: issue.resolved ? new Date(issue.resolved).toISOString() : null,
-          dueDate: customFields['Due Date']?.value ? new Date(customFields['Due Date'].value).toISOString() : null,
-          storyPoints: customFields['Story Points']?.value || customFields['Story points']?.value || null,
-          sprint: sprintName,
-          timeSpent: issue.timeSpent ? issue.timeSpent / 3600 / 1000 : null,
-          labels: issue.tags?.map(t => t.name) || [],
-          comment: issue.comments?.[0]?.text || ''
-        }
-      }).filter(t => t.key || t.summary)
-
-      const headers = ['key', 'summary', 'type', 'status', 'priority', 'assignee', 'reporter', 'created', 'updated', 'resolved', 'dueDate', 'storyPoints', 'sprint', 'timeSpent', 'labels', 'comment']
-      addDataset({ fileName: `YouTrack Sprint ${sprintName}`, headers, columnMap: {}, rows: tasks, tasks })
+  const importYouTrackSprint = (sprintName) => {
+    setSelectedYouTrackSprint(sprintName)
+    const sprint = youtrackSprints.find(s => s.name === sprintName)
+    run(async () => {
+      const { tasks, headers, sprintDates } = await youtrack.importSprint(youtrackConfig, sprintName, {
+        start: sprint?.start || null,
+        end: sprint?.finish || null
+      }, { onProgress: setProgress })
+      addDataset({ fileName: `YouTrack Sprint ${sprintName}`, headers, columnMap: {}, rows: tasks, tasks, sprintDates })
       navigate('/')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const renderCsvTab = () => (
@@ -295,7 +240,7 @@ export default function DataSourceSelector() {
             />
             <p className="form-hint">{t('dataSource.jira.apiTokenHint')}</p>
           </div>
-          <button className="btn primary" onClick={fetchJiraProjects} disabled={loading || !validateJiraConfig()}>
+          <button className="btn primary" onClick={fetchJiraProjects} disabled={loading || !jira.validateConfig(jiraConfig)}>
             {loading ? t('common.loading') : t('dataSource.jira.connectBtn')}
           </button>
         </div>
@@ -306,7 +251,12 @@ export default function DataSourceSelector() {
             ← {t('common.back')}
           </button>
           <h3>{t('dataSource.jira.selectProject')}</h3>
-          {jiraProjects.length === 0 ? (
+          {loading ? (
+            <div className="project-grid">
+              <SkeletonCard /><SkeletonCard /><SkeletonCard />
+              <SkeletonCard /><SkeletonCard /><SkeletonCard />
+            </div>
+          ) : jiraProjects.length === 0 ? (
             <p className="muted">{t('dataSource.jira.noProjects')}</p>
           ) : (
             <div className="project-grid">
@@ -314,10 +264,7 @@ export default function DataSourceSelector() {
                 <button
                   key={p.key || p.id}
                   className={`project-card${selectedJiraProject === (p.key || p.id) ? ' selected' : ''}`}
-                  onClick={() => {
-                    setSelectedJiraProject(p.key || p.id)
-                    fetchJiraSprints(p.key || p.id)
-                  }}
+                  onClick={() => fetchJiraSprints(p.key || p.id)}
                 >
                   <span className="project-key">{p.key || p.id}</span>
                   <span className="project-name">{p.name}</span>
@@ -333,7 +280,11 @@ export default function DataSourceSelector() {
             ← {t('common.back')}
           </button>
           <h3>{t('dataSource.jira.selectSprint')}</h3>
-          {jiraSprints.length === 0 ? (
+          {loading ? (
+            <div className="sprint-list">
+              <SkeletonRow /><SkeletonRow /><SkeletonRow />
+            </div>
+          ) : jiraSprints.length === 0 ? (
             <p className="muted">{t('dataSource.jira.noSprints')}</p>
           ) : (
             <div className="sprint-list">
@@ -341,10 +292,7 @@ export default function DataSourceSelector() {
                 <button
                   key={s.id}
                   className={`sprint-item${selectedJiraSprint === s.id ? ' selected' : ''}`}
-                  onClick={() => {
-                    setSelectedJiraSprint(s.id)
-                    importJiraSprint(s.id)
-                  }}
+                  onClick={() => importJiraSprint(s.id)}
                   disabled={loading}
                 >
                   <span className="sprint-name">{s.name}</span>
@@ -387,7 +335,7 @@ export default function DataSourceSelector() {
             />
             <p className="form-hint">{t('dataSource.youtrack.tokenHint')}</p>
           </div>
-          <button className="btn primary" onClick={fetchYouTrackProjects} disabled={loading || !validateYouTrackConfig()}>
+          <button className="btn primary" onClick={fetchYouTrackProjects} disabled={loading || !youtrack.validateConfig(youtrackConfig)}>
             {loading ? t('common.loading') : t('dataSource.youtrack.connectBtn')}
           </button>
         </div>
@@ -398,7 +346,12 @@ export default function DataSourceSelector() {
             ← {t('common.back')}
           </button>
           <h3>{t('dataSource.youtrack.selectProject')}</h3>
-          {youtrackProjects.length === 0 ? (
+          {loading ? (
+            <div className="project-grid">
+              <SkeletonCard /><SkeletonCard /><SkeletonCard />
+              <SkeletonCard /><SkeletonCard /><SkeletonCard />
+            </div>
+          ) : youtrackProjects.length === 0 ? (
             <p className="muted">{t('dataSource.youtrack.noProjects')}</p>
           ) : (
             <div className="project-grid">
@@ -406,10 +359,7 @@ export default function DataSourceSelector() {
                 <button
                   key={p.id}
                   className={`project-card${selectedYouTrackProject === p.id ? ' selected' : ''}`}
-                  onClick={() => {
-                    setSelectedYouTrackProject(p.id)
-                    fetchYouTrackSprints(p.id)
-                  }}
+                  onClick={() => fetchYouTrackSprints(p.id)}
                 >
                   <span className="project-key">{p.shortName}</span>
                   <span className="project-name">{p.name}</span>
@@ -425,7 +375,11 @@ export default function DataSourceSelector() {
             ← {t('common.back')}
           </button>
           <h3>{t('dataSource.youtrack.selectSprint')}</h3>
-          {youtrackSprints.length === 0 ? (
+          {loading ? (
+            <div className="sprint-list">
+              <SkeletonRow /><SkeletonRow /><SkeletonRow />
+            </div>
+          ) : youtrackSprints.length === 0 ? (
             <p className="muted">{t('dataSource.youtrack.noSprints')}</p>
           ) : (
             <div className="sprint-list">
@@ -433,10 +387,7 @@ export default function DataSourceSelector() {
                 <button
                   key={s.name}
                   className={`sprint-item${selectedYouTrackSprint === s.name ? ' selected' : ''}`}
-                  onClick={() => {
-                    setSelectedYouTrackSprint(s.name)
-                    importYouTrackSprint(s.name)
-                  }}
+                  onClick={() => importYouTrackSprint(s.name)}
                   disabled={loading}
                 >
                   <span className="sprint-name">{s.name}</span>
@@ -478,6 +429,8 @@ export default function DataSourceSelector() {
           🟣 {t('dataSource.youtrack.label')}
         </button>
       </div>
+
+      <ProgressBar progress={progress} />
 
       {activeTab === 'csv' && renderCsvTab()}
       {activeTab === 'jira' && renderJiraTab()}
