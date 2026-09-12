@@ -1,7 +1,8 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useSprint } from '../store/SprintContext'
 import { useLlm } from '../store/LlmContext'
 import { usePrefs } from '../store/PrefsContext'
+import { useAuth } from '../store/AuthContext'
 import { useI18n } from '../i18n'
 import FileUpload from './FileUpload'
 import WindowBar from './WindowBar'
@@ -10,7 +11,14 @@ export default function Layout() {
   const { datasets, activeId, setActive, removeDataset, addDataset, openMapping } = useSprint()
   const { apiKey } = useLlm()
   const { openSettings } = usePrefs()
+  const { currentUser, logout, hasPermission, isAdmin } = useAuth()
   const { t, n } = useI18n()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
+  }
 
   return (
     <div className="app-shell">
@@ -31,30 +39,46 @@ export default function Layout() {
           >
             {t('nav.dashboard')}
           </NavLink>
-          <NavLink
-            to="/compare"
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-          >
-            {t('nav.compare')}
-          </NavLink>
-          <NavLink
-            to="/analysis"
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-          >
-            {t('nav.analysis')}
-          </NavLink>
-          <NavLink
-            to="/presets"
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-          >
-            {t('nav.presets')}
-          </NavLink>
-          <NavLink
-            to="/source"
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-          >
-            {t('nav.dataSource')}
-          </NavLink>
+          {hasPermission('compare') && (
+            <NavLink
+              to="/compare"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              {t('nav.compare')}
+            </NavLink>
+          )}
+          {hasPermission('analysis') && (
+            <NavLink
+              to="/analysis"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              {t('nav.analysis')}
+            </NavLink>
+          )}
+          {hasPermission('presets') && (
+            <NavLink
+              to="/presets"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              {t('nav.presets')}
+            </NavLink>
+          )}
+          {hasPermission('dataSource') && (
+            <NavLink
+              to="/source"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              {t('nav.dataSource')}
+            </NavLink>
+          )}
+          {hasPermission('admin') && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+            >
+              {t('nav.admin')}
+            </NavLink>
+          )}
           <button className={`nav-link nav-action${apiKey ? '' : ' warning'}`} onClick={() => openSettings()}>
             ⚙ {t('nav.settings')}
           </button>
@@ -94,6 +118,19 @@ export default function Layout() {
             onParsed={(metaTasks, meta) => addDataset({ ...meta, tasks: metaTasks })}
             onNeedsMapping={(payload) => openMapping({ ...payload, mode: 'add' })}
           />
+        </div>
+
+        <div className="sidebar-user">
+          <div className="user-info">
+            <div className="user-avatar">{currentUser?.name?.charAt(0) || 'U'}</div>
+            <div className="user-details">
+              <div className="user-name">{currentUser?.name}</div>
+              <div className="user-role">{t(`auth.role${currentUser?.role?.charAt(0).toUpperCase() + currentUser?.role?.slice(1)}`)}</div>
+            </div>
+          </div>
+          <button className="btn ghost user-logout" onClick={handleLogout}>
+            {t('auth.logout')}
+          </button>
         </div>
       </aside>
 

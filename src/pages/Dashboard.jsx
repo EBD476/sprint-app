@@ -1,5 +1,6 @@
 import { useSprint } from '../store/SprintContext'
 import { usePrefs } from '../store/PrefsContext'
+import { useAuth } from '../store/AuthContext'
 import { useI18n } from '../i18n'
 import FileUpload from '../components/FileUpload'
 import StatCard from '../components/StatCard'
@@ -20,6 +21,7 @@ import { sprintChartData } from '../utils/stats'
 export default function Dashboard() {
   const { tasks, stats, csvMeta, window, addDataset, removeActive, openMapping } = useSprint()
   const { panels } = usePrefs()
+  const { hasPermission } = useAuth()
   const { t, n, pct } = useI18n()
 
   const openRemap = () =>
@@ -128,83 +130,83 @@ export default function Dashboard() {
           </div>
         )}
 
-        {panels.standup && (
+        {panels.standup && hasPermission('panels.standup') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.standup')}</h2>
             <StandupSummary tasks={tasks} />
           </div>
         )}
 
-        {panels.sankey && (
+        {panels.sankey && hasPermission('panels.sankey') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.sankey')}</h2>
             <SankeyChart tasks={tasks} />
           </div>
         )}
 
-        {panels.network && (
+        {panels.network && hasPermission('panels.network') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.network')}</h2>
             <NetworkGraph tasks={tasks} />
           </div>
         )}
 
-        {panels.burndown && (
+        {panels.burndown && hasPermission('panels.burndown') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.burndown')}</h2>
             <BurndownChart tasks={tasks} stats={stats} />
           </div>
         )}
 
-        {panels.velocity && (
+        {panels.velocity && hasPermission('panels.velocity') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.velocity')}</h2>
             <VelocityForecast tasks={tasks} stats={stats} />
           </div>
         )}
 
-        {panels.flow && (
+        {panels.flow && hasPermission('panels.flow') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.flow')}</h2>
             <FlowMetrics tasks={tasks} />
           </div>
         )}
 
-        {panels.capacity && (
+        {panels.capacity && hasPermission('panels.capacity') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.capacity')}</h2>
             <CapacityHeatmap tasks={tasks} />
           </div>
         )}
 
-        {panels.report && (
+        {panels.report && hasPermission('panels.report') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.report')}</h2>
             <RetroReport tasks={tasks} stats={stats} fileName={csvMeta.fileName} window={window} />
           </div>
         )}
 
-        {(panels.status || panels.assignee || panels.sprintProgress || panels.cycleTimes) && (
+        {(panels.status && hasPermission('panels.status') || panels.assignee && hasPermission('panels.assignee') || panels.sprintProgress && hasPermission('panels.sprintProgress') || panels.cycleTimes && hasPermission('panels.cycleTimes')) && (
           <div className="panel-grid">
-            {panels.status && (
+            {panels.status && hasPermission('panels.status') && (
               <div className="panel">
                 <h2 className="panel-title">{t('panel.status')}</h2>
                 <StatusPie data={stats.statusDist} />
               </div>
             )}
-            {panels.assignee && (
+            {panels.assignee && hasPermission('panels.assignee') && (
               <div className="panel">
                 <h2 className="panel-title">{t('panel.assignee')}</h2>
                 <AssigneesBar data={stats.byAssignee} />
               </div>
             )}
-            {panels.sprintProgress && stats.bySprint.length > 0 && (
+            {panels.sprintProgress && hasPermission('panels.sprintProgress') && stats.bySprint.length > 0 && (
               <div className="panel">
                 <h2 className="panel-title">{t('panel.sprintProgress')}</h2>
                 <SprintBar data={sprintChartData(stats.bySprint)} />
               </div>
             )}
-            {panels.cycleTimes && (
+            {panels.cycleTimes && hasPermission('panels.cycleTimes') && (
               <div className="panel">
                 <h2 className="panel-title">{t('panel.cycleTimes')}</h2>
                 {cycleData.length ? (
@@ -225,7 +227,7 @@ export default function Dashboard() {
           </div>
         )}
 
-        {panels.tasks && (
+        {panels.tasks && hasPermission('panels.tasks') && (
           <div className="panel">
             <h2 className="panel-title">{t('panel.tasks')}</h2>
             <TaskTable tasks={tasks} />
