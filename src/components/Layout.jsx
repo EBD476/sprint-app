@@ -8,6 +8,7 @@ import { useI18n } from '../i18n'
 import FileUpload from './FileUpload'
 import WindowBar from './WindowBar'
 import ChangePasswordModal from './ChangePasswordModal'
+import { DashboardIcon, CompareIcon, AnalysisIcon, PresetsIcon, DatabaseIcon, AdminIcon, SettingsIcon, KeyIcon, LogoutIcon } from './icons/Icons'
 
 export default function Layout() {
   const { datasets, activeId, setActive, removeDataset, addDataset, openMapping } = useSprint()
@@ -57,13 +58,16 @@ export default function Layout() {
           {dropdownOpen && (
             <div className="user-dropdown">
               <button className="dropdown-item" onClick={() => { setDropdownOpen(false); openSettings(); }}>
-                ⚙ {t('nav.settings')}
+                <SettingsIcon />
+                {t('nav.settings')}
               </button>
               <button className="dropdown-item" onClick={() => { setDropdownOpen(false); setPasswordModalOpen(true); }}>
-                🔒 {t('auth.changePassword')}
+                <KeyIcon />
+                {t('auth.changePassword')}
               </button>
               <button className="dropdown-item dropdown-item-danger" onClick={handleLogout}>
-                🚪 {t('auth.logout')}
+                <LogoutIcon />
+                {t('auth.logout')}
               </button>
             </div>
           )}
@@ -71,52 +75,58 @@ export default function Layout() {
         </div>
 
         <nav className="nav">
-          <NavLink
-            to="/"
-            end
-            className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-          >
-            {t('nav.dashboard')}
-          </NavLink>
+<NavLink
+             to="/"
+             end
+             className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+           >
+             <DashboardIcon />
+             {t('nav.dashboard')}
+           </NavLink>
           {hasPermission('compare') && (
-            <NavLink
-              to="/compare"
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              {t('nav.compare')}
-            </NavLink>
+<NavLink
+               to="/compare"
+               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+             >
+               <CompareIcon />
+               {t('nav.compare')}
+             </NavLink>
           )}
           {hasPermission('analysis') && (
-            <NavLink
-              to="/analysis"
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              {t('nav.analysis')}
-            </NavLink>
+<NavLink
+               to="/analysis"
+               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+             >
+               <AnalysisIcon />
+               {t('nav.analysis')}
+             </NavLink>
           )}
           {hasPermission('presets') && (
-            <NavLink
-              to="/presets"
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              {t('nav.presets')}
-            </NavLink>
+<NavLink
+               to="/presets"
+               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+             >
+               <PresetsIcon />
+               {t('nav.presets')}
+             </NavLink>
           )}
           {hasPermission('dataSource') && (
-            <NavLink
-              to="/source"
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              {t('nav.dataSource')}
-            </NavLink>
+<NavLink
+               to="/source"
+               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+             >
+               <DatabaseIcon />
+               {t('nav.dataSource')}
+             </NavLink>
           )}
           {hasPermission('admin') && (
-            <NavLink
-              to="/admin"
-              className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
-            >
-              {t('nav.admin')}
-            </NavLink>
+<NavLink
+               to="/admin"
+               className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
+             >
+               <AdminIcon />
+               {t('nav.admin')}
+             </NavLink>
           )}
         </nav>
 
