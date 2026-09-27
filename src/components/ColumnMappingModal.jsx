@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useI18n } from '../i18n'
+import { useToast } from '../store/ToastContext'
 
 const FIELDS = [
   { field: 'key' },
@@ -23,6 +24,7 @@ export default function ColumnMappingModal({ data, onCancel, onApply }) {
   const [map, setMap] = useState(() => ({ ...data.columnMap }))
   const [error, setError] = useState(null)
   const { t } = useI18n()
+  const { showToast } = useToast()
 
   const sample = data.rows[0] || {}
   const isEmpty = data.rows.length === 0
@@ -42,7 +44,12 @@ export default function ColumnMappingModal({ data, onCancel, onApply }) {
       return
     }
     const result = onApply(map)
-    if (typeof result === 'string') setError(result)
+    if (typeof result === 'string') {
+      setError(result)
+    } else {
+      showToastTranslated('toast.mappingApplied', null, 'success')
+      onCancel()
+    }
   }
 
   return (

@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { useToast } from './ToastContext'
+import { useI18n } from '../i18n'
 
 const AuthContext = createContext(null)
 
@@ -150,6 +152,8 @@ function clearSession() {
 }
 
 export function AuthProvider({ children }) {
+  const { showToastTranslated } = useToast()
+  const { t } = useI18n()
   const [users, setUsers] = useState(loadUsers)
   const [session, setSession] = useState(loadSession)
   const [currentUser, setCurrentUser] = useState(null)
@@ -197,7 +201,8 @@ export function AuthProvider({ children }) {
     clearSession()
     setSession(null)
     setCurrentUser(null)
-  }, [])
+    showToastTranslated('toast.loggedOut', null, 'success')
+  }, [showToastTranslated])
 
   const createUser = useCallback(
     (userData) => {
@@ -214,9 +219,10 @@ export function AuthProvider({ children }) {
       const updatedUsers = [...users, newUser]
       setUsers(updatedUsers)
       saveUsers(updatedUsers)
+      showToastTranslated('toast.userCreated', null, 'success')
       return { success: true, user: newUser }
     },
-    [users]
+    [users, showToastTranslated]
   )
 
   const updateUser = useCallback(
@@ -229,9 +235,37 @@ export function AuthProvider({ children }) {
       if (currentUser?.id === userId) {
         setCurrentUser((prev) => (prev ? { ...prev, ...updates } : null))
       }
+      showToastTranslated('toast.userUpdated', null, 'success')
       return { success: true }
     },
-    [users, currentUser]
+    [users, currentUser, showToastTranslated]
+  )
+
+  const changePassword = useCallback(
+    (userId, newPassword, currentPassword) => {
+      const user = users.find((u) => u.id === userId)
+      if (user && currentPassword && user.password !== currentPassword) {
+        return { success: false, error: 'auth.invalidCredentials' }
+      }
+      const updatedUsers = users.map((u) =>
+        u.id === userId ? { ...u, password: newPassword } : u
+      )
+      setUsers(updatedUsers)
+      saveUsers(updatedUsers)
+      if (currentUser?.id === userId) {
+        setCurrentUser((prev) => (prev ? { ...prev, password: newPassword } : null))
+      }
+      showToastTranslated('toast.passwordChanged', null, 'success')
+      return { success: true }
+    },
+    [users, currentUser, showToastTranslated]
+  )
+
+  const updatePermissions = useCallback(
+    (userId, permissions) => {
+      return updateUser(userId, { permissions })
+    },
+    [updateUser]
   )
 
   const deleteUser = useCallback(
@@ -245,13 +279,6 @@ export function AuthProvider({ children }) {
       return { success: true }
     },
     [users, currentUser]
-  )
-
-  const updatePermissions = useCallback(
-    (userId, permissions) => {
-      return updateUser(userId, { permissions })
-    },
-    [updateUser]
   )
 
   const hasPermission = useCallback(
@@ -279,6 +306,7 @@ export function AuthProvider({ children }) {
     createUser,
     updateUser,
     deleteUser,
+    changePassword,
     updatePermissions,
     hasPermission,
     isAdmin: currentUser?.role === 'admin',

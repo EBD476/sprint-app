@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../store/AuthContext'
 import { useI18n } from '../i18n'
+import { useToast } from '../store/ToastContext'
 
 export default function Login() {
   const { t } = useI18n()
   const { login } = useAuth()
+  const { showToastTranslated } = useToast()
   const navigate = useNavigate()
   const location = useLocation()
   const from = location.state?.from?.pathname || '/'
@@ -22,9 +24,11 @@ export default function Login() {
     const result = login(username, password)
     setLoading(false)
     if (result.success) {
+      showToastTranslated('toast.loginSuccess', null, 'success')
       navigate(from, { replace: true })
     } else {
       setError(t(result.error))
+      showToastTranslated('toast.loginFailed', null, 'error')
     }
   }
 

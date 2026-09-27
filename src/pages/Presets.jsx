@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { usePresets } from '../store/PresetContext'
 import { useI18n } from '../i18n'
+import { useToast } from '../store/ToastContext'
 
 export default function Presets() {
   const { presets, addPreset, updatePreset, deletePreset, resetPresets } = usePresets()
   const { t } = useI18n()
+  const { showToastTranslated } = useToast()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingId, setEditingId] = useState(null)
   const [title, setTitle] = useState('')
@@ -40,8 +42,13 @@ export default function Presets() {
       setError(t('presets.requireError'))
       return
     }
-    if (editingId) updatePreset(editingId, title, prompt)
-    else addPreset(title, prompt)
+    if (editingId) {
+      updatePreset(editingId, title, prompt)
+      showToastTranslated('toast.presetUpdated', null, 'success')
+    } else {
+      addPreset(title, prompt)
+      showToastTranslated('toast.presetAdded', null, 'success')
+    }
     closeModal()
   }
 
@@ -51,7 +58,10 @@ export default function Presets() {
   }
 
   const handleDelete = (p) => {
-    if (window.confirm(t('presets.confirmDelete', { title: p.title }))) deletePreset(p.id)
+    if (window.confirm(t('presets.confirmDelete', { title: p.title }))) {
+      deletePreset(p.id)
+      showToastTranslated('toast.presetDeleted', null, 'success')
+    }
   }
 
   return (
@@ -62,7 +72,10 @@ export default function Presets() {
           <p className="muted">{t('presets.subtitle')}</p>
         </div>
         <div className="header-actions">
-          <button className="btn ghost" onClick={resetPresets}>
+          <button className="btn ghost" onClick={() => {
+            resetPresets()
+            showToastTranslated('toast.presetsReset', null, 'success')
+          }}>
             {t('presets.reset')}
           </button>
           <button className="btn primary" onClick={openCreate}>

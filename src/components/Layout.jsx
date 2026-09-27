@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useSprint } from '../store/SprintContext'
 import { useLlm } from '../store/LlmContext'
@@ -6,6 +7,7 @@ import { useAuth } from '../store/AuthContext'
 import { useI18n } from '../i18n'
 import FileUpload from './FileUpload'
 import WindowBar from './WindowBar'
+import ChangePasswordModal from './ChangePasswordModal'
 
 export default function Layout() {
   const { datasets, activeId, setActive, removeDataset, addDataset, openMapping } = useSprint()
@@ -15,20 +17,57 @@ export default function Layout() {
   const { t, n } = useI18n()
   const navigate = useNavigate()
 
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
+  const dropdownRef = useRef(null)
+
   const handleLogout = () => {
     logout()
     navigate('/login')
   }
 
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const roleLabel = t(`auth.role${currentUser?.role?.charAt(0).toUpperCase() + currentUser?.role?.slice(1)}`)
+
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">
-          <span className="brand-dot" />
-          <div>
-            <div className="brand-name">Sprint Pulse</div>
-            <div className="brand-sub">{t('brand.sub')}</div>
-          </div>
+        <div className="sidebar-user-top" ref={dropdownRef}>
+          <button
+            className="user-menu-trigger"
+            onClick={() => setDropdownOpen((v) => !v)}
+            aria-label={t('auth.changePassword')}
+          >
+            <div className="user-avatar-lg">{currentUser?.name?.charAt(0) || 'U'}</div>
+            <div className="user-info-bottom">
+              <div className="user-name">{currentUser?.name}</div>
+              <div className="user-role">{roleLabel}</div>
+            </div>
+            <span className={`dropdown-arrow${dropdownOpen ? ' open' : ''}`}>▾</span>
+          </button>
+          {dropdownOpen && (
+            <div className="user-dropdown">
+              <button className="dropdown-item" onClick={() => { setDropdownOpen(false); openSettings(); }}>
+                ⚙ {t('nav.settings')}
+              </button>
+              <button className="dropdown-item" onClick={() => { setDropdownOpen(false); setPasswordModalOpen(true); }}>
+                🔒 {t('auth.changePassword')}
+              </button>
+              <button className="dropdown-item dropdown-item-danger" onClick={handleLogout}>
+                🚪 {t('auth.logout')}
+              </button>
+            </div>
+          )}
+          <ChangePasswordModal open={passwordModalOpen} onClose={() => setPasswordModalOpen(false)} />
         </div>
 
         <nav className="nav">
@@ -79,9 +118,6 @@ export default function Layout() {
               {t('nav.admin')}
             </NavLink>
           )}
-          <button className={`nav-link nav-action${apiKey ? '' : ' warning'}`} onClick={() => openSettings()}>
-            ⚙ {t('nav.settings')}
-          </button>
         </nav>
 
         <div className="sidebar-datasets">
@@ -120,17 +156,12 @@ export default function Layout() {
           />
         </div>
 
-        <div className="sidebar-user">
-          <div className="user-info">
-            <div className="user-avatar">{currentUser?.name?.charAt(0) || 'U'}</div>
-            <div className="user-details">
-              <div className="user-name">{currentUser?.name}</div>
-              <div className="user-role">{t(`auth.role${currentUser?.role?.charAt(0).toUpperCase() + currentUser?.role?.slice(1)}`)}</div>
-            </div>
+        <div className="brand-bottom">
+          <span className="brand-dot" />
+          <div>
+            <div className="brand-name-sm">Sprint Pulse</div>
+            <div className="brand-sub">{t('brand.sub')}</div>
           </div>
-          <button className="btn ghost user-logout" onClick={handleLogout}>
-            {t('auth.logout')}
-          </button>
         </div>
       </aside>
 

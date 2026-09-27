@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { useI18n } from '../i18n'
 import FileUpload from '../components/FileUpload'
 import { useSprint } from '../store/SprintContext'
+import { useToast } from '../store/ToastContext'
 import * as jira from '../utils/jira'
 import * as youtrack from '../utils/youtrack'
 
@@ -79,6 +80,7 @@ export default function DataSourceSelector() {
   const navigate = useNavigate()
   const { t } = useI18n()
   const { datasets, addDataset, openMapping } = useSprint()
+  const { showToastTranslated } = useToast()
   const [activeTab, setActiveTab] = useState('csv')
   const [jiraConfig, setJiraConfig] = useState(loadJiraConfig)
   const [youtrackConfig, setYouTrackConfig] = useState(loadYouTrackConfig)
@@ -109,6 +111,7 @@ export default function DataSourceSelector() {
 
   const handleFileUpload = (tasks, meta) => {
     addDataset({ ...meta, tasks })
+    showToastTranslated('toast.csvImported', null, 'success')
     navigate('/')
   }
 
@@ -151,6 +154,7 @@ export default function DataSourceSelector() {
     run(async () => {
       const { tasks, headers, sprintDates } = await jira.importSprint(jiraConfig, sprintId, { onProgress: setProgress })
       addDataset({ fileName: `Jira Sprint ${sprintId}`, headers, columnMap: {}, rows: tasks, tasks, sprintDates })
+      showToastTranslated('toast.jiraImported', null, 'success')
       navigate('/')
     })
   }
@@ -180,6 +184,7 @@ export default function DataSourceSelector() {
         end: sprint?.finish || null
       }, { onProgress: setProgress })
       addDataset({ fileName: `YouTrack Sprint ${sprintName}`, headers, columnMap: {}, rows: tasks, tasks, sprintDates })
+      showToastTranslated('toast.youtrackImported', null, 'success')
       navigate('/')
     })
   }

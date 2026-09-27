@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useRef, useState } from 'react'
 
 const PrefsContext = createContext(null)
 
@@ -55,8 +55,13 @@ export function PrefsProvider({ children }) {
   const [panels, setPanels] = useState(loadPanels)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [settingsTab, setSettingsTab] = useState('appearance')
+  const initialized = useRef(false)
 
   useEffect(() => {
+    if (!initialized.current) {
+      initialized.current = true
+      return
+    }
     const root = document.documentElement
     root.setAttribute('data-theme', theme)
     try {
@@ -67,6 +72,7 @@ export function PrefsProvider({ children }) {
   }, [theme])
 
   useEffect(() => {
+    if (!initialized.current) return
     const root = document.documentElement
     root.setAttribute('lang', locale)
     root.setAttribute('dir', locale === 'fa' ? 'rtl' : 'ltr')
@@ -78,6 +84,7 @@ export function PrefsProvider({ children }) {
   }, [locale])
 
   useEffect(() => {
+    if (!initialized.current) return
     try {
       localStorage.setItem(WINDOW_STYLE_KEY, windowStyle)
     } catch {

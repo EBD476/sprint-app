@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { usePrefs, PANEL_IDS } from '../store/PrefsContext'
 import { useLlm } from '../store/LlmContext'
 import { useI18n } from '../i18n'
+import { useToast } from '../store/ToastContext'
 
 export default function SettingsModal() {
   const {
@@ -21,6 +22,7 @@ export default function SettingsModal() {
   } = usePrefs()
   const { saveSettings, baseUrl, apiKey, model, mode, proxyUrl, proxyToken } = useLlm()
   const { t } = useI18n()
+  const { showToast, showToastTranslated } = useToast()
   const [draft, setDraft] = useState({ baseUrl, apiKey, model, mode, proxyUrl, proxyToken })
 
   useEffect(() => {
@@ -40,7 +42,29 @@ export default function SettingsModal() {
       proxyUrl: draft.proxyUrl.trim() || 'http://localhost:8787/v1/chat/completions',
       proxyToken: draft.proxyToken.trim(),
     })
+    showToastTranslated('toast.settingsSaved', null, 'success')
     closeSettings()
+  }
+
+  const handleToggleTheme = (newTheme) => {
+    setTheme(newTheme)
+    showToastTranslated('toast.themeChanged', { theme: t(`prefs.${newTheme}Label`) }, 'success')
+  }
+
+  const handleToggleLocale = (newLocale) => {
+    setLocale(newLocale)
+    const language = newLocale === 'en' ? t('lang.english') : t('lang.persian')
+    showToastTranslated('toast.languageChanged', { language }, 'success')
+  }
+
+  const handleTogglePanel = (id) => {
+    togglePanel(id)
+    showToastTranslated('toast.panelToggled', { panel: t(`panel.${id}`) }, 'success')
+  }
+
+  const handleResetPanels = () => {
+    resetPanels()
+    showToastTranslated('toast.panelsReset', null, 'success')
   }
 
   return (
@@ -87,14 +111,14 @@ export default function SettingsModal() {
                 <button
                   type="button"
                   className={`pref-btn${theme === 'light' ? ' active' : ''}`}
-                  onClick={() => setTheme('light')}
+                  onClick={() => handleToggleTheme('light')}
                 >
                   ☀ {t('prefs.light')}
                 </button>
                 <button
                   type="button"
                   className={`pref-btn${theme === 'dark' ? ' active' : ''}`}
-                  onClick={() => setTheme('dark')}
+                  onClick={() => handleToggleTheme('dark')}
                 >
                   🌙 {t('prefs.dark')}
                 </button>
@@ -106,14 +130,14 @@ export default function SettingsModal() {
                 <button
                   type="button"
                   className={`pref-btn${locale === 'en' ? ' active' : ''}`}
-                  onClick={() => setLocale('en')}
+                  onClick={() => handleToggleLocale('en')}
                 >
                   English
                 </button>
                 <button
                   type="button"
                   className={`pref-btn${locale === 'fa' ? ' active' : ''}`}
-                  onClick={() => setLocale('fa')}
+                  onClick={() => handleToggleLocale('fa')}
                 >
                   فارسی
                 </button>
@@ -150,7 +174,7 @@ export default function SettingsModal() {
                     key={id}
                     type="button"
                     className={`panel-toggle${panels[id] ? ' active' : ''}`}
-                    onClick={() => togglePanel(id)}
+                    onClick={() => handleTogglePanel(id)}
                   >
                     {t(`panel.${id}`)}
                   </button>
@@ -158,7 +182,7 @@ export default function SettingsModal() {
               </div>
             </div>
             <div className="modal-actions">
-              <button className="btn ghost" onClick={resetPanels}>
+              <button className="btn ghost" onClick={handleResetPanels}>
                 {t('settings.resetPanels')}
               </button>
               <button className="btn primary" onClick={closeSettings}>

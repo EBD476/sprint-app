@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react'
 import { usePrefs } from './PrefsContext'
+import { useToast } from './ToastContext'
 
 const LS_KEY = 'sprint-pulse-presets'
 
@@ -58,6 +59,7 @@ function loadPresets(locale) {
 
 export function PresetProvider({ children }) {
   const { locale } = usePrefs()
+  const { showToastTranslated } = useToast()
   const [presets, setPresets] = useState(() => loadPresets(locale))
 
   useEffect(() => {
@@ -68,19 +70,32 @@ export function PresetProvider({ children }) {
     }
   }, [presets])
 
-  const addPreset = (title, prompt) =>
+  const addPreset = (title, prompt) => {
     setPresets((prev) => [...prev, { id: uid(), title: title.trim(), prompt: prompt.trim() }])
+    showToastTranslated('toast.presetAdded', null, 'success')
+  }
 
   const updatePreset = (id, title, prompt) =>
     setPresets((prev) =>
       prev.map((p) => (p.id === id ? { ...p, title: title.trim(), prompt: prompt.trim() } : p))
     )
+  const updatePresetWithToast = (id, title, prompt) => {
+    updatePreset(id, title, prompt)
+    showToastTranslated('toast.presetUpdated', null, 'success')
+  }
 
   const deletePreset = (id) => setPresets((prev) => prev.filter((p) => p.id !== id))
+  const deletePresetWithToast = (id) => {
+    deletePreset(id)
+    showToastTranslated('toast.presetDeleted', null, 'success')
+  }
 
-  const resetPresets = () => setPresets(defaultPresets(locale))
+  const resetPresets = () => {
+    setPresets(defaultPresets(locale))
+    showToastTranslated('toast.presetsReset', null, 'success')
+  }
 
-  const value = { presets, addPreset, updatePreset, deletePreset, resetPresets }
+  const value = { presets, addPreset, updatePreset: updatePresetWithToast, deletePreset: deletePresetWithToast, resetPresets }
 
   return <PresetContext.Provider value={value}>{children}</PresetContext.Provider>
 }

@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { computeStats } from '../utils/stats'
 import { buildTasks } from '../utils/csv'
 import { applyWindow, activeSprintRange } from '../utils/window'
+import { useToast } from './ToastContext'
+import { useI18n } from '../i18n'
 
 const SprintContext = createContext(null)
 const STORAGE_KEY = 'sprint-pulse-data'
@@ -46,6 +48,8 @@ function loadPersisted() {
 }
 
 export function SprintProvider({ children }) {
+  const { showToastTranslated } = useToast()
+  const { t } = useI18n()
   const [initial] = useState(loadPersisted)
   const [datasets, setDatasets] = useState(initial.datasets)
   const [activeId, setActiveId] = useState(initial.activeId)
@@ -106,6 +110,7 @@ export function SprintProvider({ children }) {
       }
       return next
     })
+    showToastTranslated('toast.datasetRemoved', null, 'success')
   }
 
   const openMapping = (payload) => setPendingMapping(payload)
@@ -118,8 +123,13 @@ export function SprintProvider({ children }) {
       const tasks = buildTasks(p.rows, columnMap)
       const meta = { fileName: p.fileName, headers: p.headers, columnMap, rows: p.rows, tasks }
       if (p.mode === 'add') addDataset(meta)
-      else if (p.mode === 'replace') updateActive(meta)
-      else updateActive({ columnMap, tasks })
+      else if (p.mode === 'replace') {
+        updateActive(meta)
+        showToastTranslated('toast.mappingUpdated', null, 'success')
+      } else {
+        updateActive({ columnMap, tasks })
+        showToastTranslated('toast.mappingApplied', null, 'success')
+      }
       setPendingMapping(null)
     } catch (err) {
       return err.message
@@ -132,6 +142,16 @@ export function SprintProvider({ children }) {
   const stats = useMemo(() => (tasks ? computeStats(tasks) : null), [tasks])
   const csvMeta = active
 
+  const setWindowWithToast = (next) => {
+    setWindow(next)
+    showToastTranslated('toast.timeWindowUpdated', null, 'success')
+  }
+
+  const resetWindow = () => {
+    setWindow({ start: null, end: null })
+    showToastTranslated('toast.timeWindowReset', null, 'success')
+  }
+
   const value = useMemo(
     () => ({
       datasets,
@@ -142,8 +162,8 @@ export function SprintProvider({ children }) {
       stats,
       csvMeta,
       window,
-      setWindow,
-      resetWindow: () => setWindow({ start: null, end: null }),
+      setWindow: setWindowWithToast,
+      resetWindow,
       addDataset,
       updateActive,
       removeDataset,
