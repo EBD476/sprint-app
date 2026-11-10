@@ -1846,6 +1846,11 @@ html[dir='rtl'] .task-drawer {
   z-index: 100;
 }
 
+/* Rendered via portal so it always sits above every other layer. */
+.modal-overlay-top {
+  z-index: 10000;
+}
+
 .modal {
   width: 100%;
   max-width: 520px;

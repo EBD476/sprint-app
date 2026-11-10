@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuth } from '../store/AuthContext'
 import { useI18n } from '../i18n'
 
@@ -34,8 +35,8 @@ export default function ChangePasswordModal({ open, onClose }) {
     }
   }
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay modal-overlay-top" onClick={onClose}>
       <div
         className="modal"
         role="dialog"
@@ -99,6 +100,7 @@ export default function ChangePasswordModal({ open, onClose }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
